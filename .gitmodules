@@ -1,0 +1,3 @@
+[submodule "mono_depth/DepthAnythingV2"]
+	path = mono_depth/DepthAnythingV2
+	url = https://github.com/eieioF11/Depth-Anything-V2.git
