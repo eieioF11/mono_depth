@@ -20,27 +20,33 @@ def generate_launch_description():
             package='mono_depth',
             executable='mono_depth',
             namespace='',
+            # Azure Kinect
+            # remappings=[('image_raw', '/rgb/image_raw'),
+            #             ('camera_info', '/rgb/camera_info'),],
+            # theta v
+            remappings=[('image_raw', '/thetav/image_raw'),
+                        ('camera_info', '/thetav/camera_info'),],
             output="screen",
             respawn=True,
         ),
-        launch_ros.actions.ComposableNodeContainer(
-            name='container',
-            namespace='',
-            package='rclcpp_components',
-            executable='component_container',
-            composable_node_descriptions=[
-                # Driver itself
-                launch_ros.descriptions.ComposableNode(
-                    package='depth_image_proc',
-                    plugin='depth_image_proc::PointCloudXyzNode',
-                    name='point_cloud_xyz_node',
-                    remappings=[('image_rect', '/mono_depth/depth'),
-                                ('camera_info', '/mono_depth/camera_info'),
-                                ('points', '/mono_depth/point_cloud')],
-                ),
-            ],
-            output='screen',
-        ),
+        # launch_ros.actions.ComposableNodeContainer(
+        #     name='container',
+        #     namespace='',
+        #     package='rclcpp_components',
+        #     executable='component_container',
+        #     composable_node_descriptions=[
+        #         # Driver itself
+        #         launch_ros.descriptions.ComposableNode(
+        #             package='depth_image_proc',
+        #             plugin='depth_image_proc::PointCloudXyzNode',
+        #             name='point_cloud_xyz_node',
+        #             remappings=[('image_rect', '/mono_depth/depth'),
+        #                         ('camera_info', '/mono_depth/camera_info'),
+        #                         ('points', '/mono_depth/point_cloud')],
+        #         ),
+        #     ],
+        #     output='screen',
+        # ),
     ]
 
     return LaunchDescription(list)

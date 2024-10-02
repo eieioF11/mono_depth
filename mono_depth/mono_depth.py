@@ -35,6 +35,7 @@ class MonoDepth(Node):
 		# ノードの初期化
 		super().__init__(self.SELFNODE)
 		self.get_logger().info("%s initializing..." % (self.SELFNODE))
+		self.encoder =  self.param("encoder", 'vits').string_value
 		# モデルの読み込み
 		self.get_logger().info("model path:%s " % (self.MODEL_PAHT))
 		self.model = DepthAnythingV2(**self.model_configs[self.encoder])
@@ -44,8 +45,8 @@ class MonoDepth(Node):
 		# ros2 init
 		self.image_pub_ = self.create_publisher(Image,'mono_depth/depth', 1)
 		self.info_pub_ = self.create_publisher(CameraInfo,'mono_depth/camera_info', 1)
-		self.image_sub_ = self.create_subscription(Image,'/thetav/image_raw', self.image_callback, qos_profile=ReliabilityPolicy.RELIABLE)
-		self.info_sub_ = self.create_subscription(CameraInfo,'/thetav/camera_info', self.info_callback, qos_profile=ReliabilityPolicy.RELIABLE)
+		self.image_sub_ = self.create_subscription(Image,'image_raw', self.image_callback, qos_profile=ReliabilityPolicy.RELIABLE)
+		self.info_sub_ = self.create_subscription(CameraInfo,'camera_info', self.info_callback, qos_profile=ReliabilityPolicy.RELIABLE)
 		self.image_ = None
 		self.info_ = None
 		self.bridge_ = CvBridge()
@@ -53,6 +54,11 @@ class MonoDepth(Node):
 
 	def __del__(self):
 		self.get_logger().info("%s done." % self.SELFNODE)
+
+
+	def param(self, name, value):
+		self.declare_parameter(name, value)
+		return self.get_parameter(name).get_parameter_value()
 
 	def inversion(self,depth):
 		ratio = (depth - depth.min()) / (depth.max() - depth.min())
