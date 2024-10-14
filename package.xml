@@ -4,7 +4,7 @@
   <name>mono_depth</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="nishizawa@aisl.cs.tut.ac.jp">aisl</maintainer>
+  <maintainer email="eieioeiji0501@gmail.com">f11</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>
