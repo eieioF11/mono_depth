@@ -12,6 +12,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 import cv2
 import torch
 from mono_depth.DepthAnythingV2.depth_anything_v2.dpt import DepthAnythingV2
+from mono_depth.DepthAnythingV2.depth_anything_v2.dpt_trt import DepthAnythingV2 as DepthAnythingV2TRT
 
 class MonoDepth(Node):
   # デプス関連パラメータ
@@ -43,6 +44,7 @@ class MonoDepth(Node):
 		# モデルの読み込み
 		self.get_logger().info("model path:%s " % (self.MODEL_PAHT))
 		self.model = DepthAnythingV2(**self.model_configs[self.encoder])
+		# self.model = DepthAnythingV2TRT(**self.model_configs[self.encoder])
 		self.model.load_state_dict(torch.load(self.MODEL_PAHT+f'/depth_anything_v2_{self.encoder}.pth', map_location='cpu'))
 		self.model = self.model.to(self.DEVICE).eval()
 		self.get_logger().info("Using %s" % (self.DEVICE))
