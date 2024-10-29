@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import argparse
 # ros2
 import rclpy
 from rclpy.node import Node
@@ -13,9 +14,12 @@ import cv2
 import torch
 from mono_depth.DepthAnythingV2.depth_anything_v2.dpt import DepthAnythingV2
 from mono_depth.DepthAnythingV2.depth_anything_v2.dpt_trt import DepthAnythingV2 as DepthAnythingV2TRT
+import pycuda.driver as cuda
+import tensorrt as trt
+from mono_depth.util.transform import load_image
 
 class MonoDepth(Node):
-  # デプス関連パラメータ
+	# デプス関連パラメータ
 	MIN_DEPTH = 1
 	MAX_DEPTH = 10
 	D_DEPTH = MAX_DEPTH - MIN_DEPTH
@@ -46,6 +50,10 @@ class MonoDepth(Node):
 		self.model = DepthAnythingV2(**self.model_configs[self.encoder])
 		# self.model = DepthAnythingV2TRT(**self.model_configs[self.encoder])
 		self.model.load_state_dict(torch.load(self.MODEL_PAHT+f'/depth_anything_v2_{self.encoder}.pth', map_location='cpu'))
+		# TensorRT
+		self.logger = trt.Logger(trt.Logger.WARNING)
+		with open(self.MODEL_PAHT+f'/depth_anything_v2_{self.encoder}.onnx', 'rb') as f, trt.Runtime(self.logger) as runtime:
+			self.engine = runtime.deserialize_cuda_engine(f.read())
 		self.model = self.model.to(self.DEVICE).eval()
 		self.get_logger().info("Using %s" % (self.DEVICE))
 		# publisher
@@ -72,6 +80,30 @@ class MonoDepth(Node):
 	def inversion(self,depth):
 		tf_depth = self.tf_range(depth, depth.min(), depth.max())
 		depth = (65535.0 / tf_depth).astype(np.uint16)
+		return depth
+
+	def infer_image(self,raw_image):
+		input_image, (orig_h, orig_w) = load_image(raw_image)
+		# Create logger and load the TensorRT engine
+		with self.engine.create_execution_context() as context:
+			input_shape = context.get_tensor_shape('input')
+			output_shape = context.get_tensor_shape('output')
+			h_input = cuda.pagelocked_empty(trt.volume(input_shape), dtype=np.float32)
+			h_output = cuda.pagelocked_empty(trt.volume(output_shape), dtype=np.float32)
+			d_input = cuda.mem_alloc(h_input.nbytes)
+			d_output = cuda.mem_alloc(h_output.nbytes)
+			stream = cuda.Stream()
+			# Copy the input image to the pagelocked memory
+			np.copyto(h_input, input_image.ravel())
+			# Copy the input to the GPU, execute the inference, and copy the output back to the CPU
+			cuda.memcpy_htod_async(d_input, h_input, stream)
+			context.execute_async_v2(bindings=[int(d_input), int(d_output)], stream_handle=stream.handle)
+			cuda.memcpy_dtoh_async(h_output, d_output, stream)
+			stream.synchronize()
+			depth = h_output
+		# Process the depth output
+		depth = np.reshape(depth, output_shape[2:])
+		depth = cv2.resize(depth, (orig_w, orig_h))
 		return depth
 
 	def image_callback(self, msg):

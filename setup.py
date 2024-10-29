@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mono_depth = '+ package_name +'.mono_depth:main',
+            'export_v2 = '+ package_name +'.export_v2:main',
         ],
     },
 )
