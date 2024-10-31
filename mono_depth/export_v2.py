@@ -13,8 +13,8 @@ MODEL_PAHT = os.path.abspath(__file__.replace('export_v2.py', 'models'))
 def main():
     parser = argparse.ArgumentParser(description='Depth Anything V2')
 
-    parser.add_argument('--input-size', type=int, default=518)
     parser.add_argument('--encoder', type=str, default='vitl', choices=['vits', 'vitb', 'vitl', 'vitg'])
+    parser.add_argument('--input-size', type=int, default=518)
 
     args = parser.parse_args()
     # we are undergoing company review procedures to release Depth-Anything-Giant checkpoint
@@ -24,6 +24,7 @@ def main():
         'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
         'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
     }
+    print(f"Exporting model with encoder {args.encoder}")
 
     depth_anything = DepthAnythingV2(**model_configs[args.encoder])
     depth_anything.load_state_dict(torch.load(MODEL_PAHT+f'/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
@@ -40,7 +41,9 @@ def main():
     # Export the PyTorch model to ONNX format
     torch.onnx.export(depth_anything, dummy_input, onnx_path, opset_version=11, input_names=["input"], output_names=["output"], verbose=True)
 
-    print(f"Model exported to {onnx_path}")
+    # print(f"Model exported to {onnx_path}")
+    # cmd = "/usr/src/tensorrt/bin/trtexec --onnx={} --saveEngine={}".format(onnx_path, onnx_path.replace('.onnx', '.engine'))
+    # os.system(cmd)
 
 if __name__ == "__main__":
     main()

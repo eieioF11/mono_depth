@@ -12,9 +12,14 @@ git submodule update --init --recursive
 cd mono_depth/DepthAnythingV2/
 pip3 install -r requirements.txt
 ```
+## TensorRT Installation
+- https://developer.nvidia.com/tensorrt \
+Tested on tensorrt 8.6.2
+
 ## Model Download and Deployment
 Download models from the following URL and place them in mono_depth/models \
 ※To download all models, run the following shell script
+※If you are using TensorRT, you will need to convert your model.
 | Model | Params | Checkpoint |
 |:-|-:|:-:|
 | Depth-Anything-V2-Small | 24.8M | [Download](https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.pth?download=true) |
@@ -27,4 +32,10 @@ Download models from the following URL and place them in mono_depth/models \
 cd mono_depth
 sh download_models.sh
 ```
-
+### Model conversion
+※Do this after building the package with colcon build.
+```bash
+cd mono_depth/mono_depth
+chmod 777 export.bash
+source export.bash
+```
